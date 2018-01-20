@@ -28,10 +28,13 @@ class Transaction {
                     destination: destinationKey,
                     asset: StellarSdk.Asset.native(),
                     amount: amount,
-                }))
-                .addMemo(StellarSdk.Memo.text(memo))
-                .build(); 
+                }));
 
+            if (memo) {
+                this.transaction.addMemo(StellarSdk.Memo.text(memo))
+            }
+
+            this.transaction.build();
             this.transaction.sign();
 
             return server.submitTransaction(this.transaction);

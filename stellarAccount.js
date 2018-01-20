@@ -6,15 +6,22 @@ const Transaction = require('./stellarTransaction.js');
 
 
 class StellarAccount {
-    constructor () {
+    constructor (configPath) {
+        if (!configPath) {
+            throw "Config Path is required";
+            return;
+        }
+        this.configPath = configPath;
         this.account = this.createOrLoadStellarAccount();
+        console.log(this.configPath, this.account);
     }
 
     loadConfig() {
-        let data = fs.readFileSync('/Users/ryan/stellar.conf').toString();
+        console.log(this.configPath);
+        let data = fs.readFileSync(this.configPath).toString();
         return data;
     }
-    
+
     createOrLoadStellarAccount () {
         let currConf = this.loadConfig();
         if (currConf) {
@@ -26,7 +33,7 @@ class StellarAccount {
         }
         return this.createAccount();
     }
-    
+
     createAccount () {
         var pair = StellarSdk.Keypair.random();
         let secret = pair.secret();
@@ -37,9 +44,9 @@ class StellarAccount {
             pubKey: pubKey
         };
     }
-    
+
     writeAccountToFile (secret, pubKey) {
-        let fd = fs.openSync('/Users/ryan/stellar.conf', 'w+');
+        let fd = fs.openSync(this.configPath, 'w+');
         fs.writeFileSync(fd, secret + '|' + pubKey);
     }
 
@@ -67,20 +74,11 @@ class StellarAccount {
         });
     }
 
-    sendAsset (assetType, amount, destination, memo=undefined) {
-        let sourceKeys = StellarSdk.Keypair
-          .fromSecret(this.account.secret);
+    sendAsset (destination, assetType, amount, memo=undefined) {
+        let sourceKeys = StellarSdk.Keypair.fromSecret(this.account.secret);
         let transaction = new Transaction(this.account.pubKey, sourceKeys);
         return transaction.sendPayment(destination, assetType, amount, 'Wahooo');
     }
 }
 
-let acct = new StellarAccount();
-acct.loadAccount();
-acct.sendAsset('XLM', '100', '123123', 'YAY')
-.then(function(body) {
-    console.log(body);
-})
-.catch(function(err) {
-    console.log(err);
-});
+module.exports = StellarAccount;
